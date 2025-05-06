@@ -37,49 +37,54 @@ def generate_problems(task_specification):
     """
     system_prompt = """You are a Parsons problem generator.
 
-Your task is to generate a set of problems based on the selected concepts and programming language.
-Each problem should include a problem statement, a solution, and distractor blocks.
-It is okay if the distractor blocks are not complete or contain duplicates of the solution blocks. The problem display interface will handle that. In particular, the distractor set will be formed by the union of lines in the distractor blocks differenced by the set of solution blocks.
-Use "_thoughts" to sketch out the problem before writing the detailed specification for it.
+Your task is to generate a set of programming problems in the selected language, relevant to the selected concepts and difficulties. Each problem should include:
+- a clear problem description,
+- a set of solution blocks (in correct order),
+- a set of distractor blocks (plausible but incorrect or out-of-place code),
+- and optional metadata such as difficulty and concepts.
 
-The output should be a JSON object with the following structure:
+The output must be a JSON object with this structure:
 
 {
-    "language": "JavaScript",
-    "problems": [
-        {
-            "_thoughts": [
-                "I'll require the user to build a function that doesn't get called.",
-                "I'll test their ability to give it a good name.",
-                "And I'll have them pick a good body for it.",
-                "Distractors will include other names and bodies as well as loose body fragments with bad indentation."
-            ],
-            "problem": "Write a function that adds two numbers.",
-            "solution_blocks": [
-                "function add(a, b) {",
-                "    return a + b;",
-                "}"
-            ],
-            "distractor_blocks": [
-                "function subtract(a, b) {",
-                "    return a - b;",
-                "}",
-                "function multiply(a, b) {",
-                "    return a * b;",
-                "}",
-                "a + b",
-                "return a;"
-            ],
-            "difficulty": "Easy",
-            "concepts": ["Variable Assignment", "Basic Arithmetic"]
-        },
-        ...
-    ]
+  "language": "Python",
+  "num_problems": 3,
+  "problems": [
+    {
+      "_thoughts": [
+        "This problem focuses on using a for-loop to iterate and update a variable.",
+        "I will include a distractor with the wrong range and another with an unrelated variable."
+      ],
+      "problem": "Arrange the code so that x == 3 when the program terminates.",
+      "solution_blocks": [
+        { "id": "block-a1", "code": "x = 27" },
+        { "id": "block-b1", "code": "for i in range(2):" },
+        { "id": "block-c1", "code": "x /= 3" }
+      ],
+      "distractor_blocks": [
+        { "id": "block-d1", "code": "y = 57" },
+        { "id": "block-e1", "code": "x *= y" },
+        { "id": "block-f1", "code": "for i in range(3):" }
+      ],
+      "difficulty": "Medium",
+      "concepts": ["Loops", "Variable Assignment"],
+      "language": "Python"
+    },
+    ...
+  ]
 }
 
-The problems should be relevant to the selected concepts without including any of the concepts that were not selected.
-The collection should have exactly as many problems as specified in the JSON object that will follow.
+**Each `solution_blocks` and `distractor_blocks` list must contain objects, each with:**
+- `"id"`: a unique identifier string like `"block-a1"`, `"block-b1"`, etc.
+- `"code"`: a single line of code.
+
+The problems should be relevant only to the selected concepts and reflect the indicated difficulty levels. Do not include concepts that were marked false.
+
+The `"num_problems"` field in the output must match the `num_problems` value from the input task specification.
+IMPORTANT: DO NOT INCLUDE DUPLICATE CODE SNIPPETS ACROSS SOLUTIONS AND DISTRACTORS...
+
+Return a well-formed JSON object exactly as described above. Do not include any explanation, extra commentary, or surrounding prose — just the JSON.
 """
+
 
     # Call OpenAI API
     chunks = client.chat.completions.create(
@@ -98,7 +103,41 @@ The collection should have exactly as many problems as specified in the JSON obj
 
 
 if __name__ == "__main__":
-    # Example task specification
+
+    # for batch 1
+    task_spec1 = {
+        "language": "C+",
+        "concepts": {
+            "Easy": {"Variable Assignment": True, "Basic Arithmetic": True},
+            "Medium": {"Functions": True},
+            "Hard": {"Recursion": False},
+        },
+        "num_problems": 3,
+    }
+
+    # for batch 2
+    task_spec2 = {
+        "language": "Javascript",
+        "concepts": {
+            "Easy": {"Variable Assignment": True, "Basic Arithmetic": True},
+            "Medium": {"Functions": True},
+            "Hard": {"Recursion": False},
+        },
+        "num_problems": 1,
+    }
+
+    # for batch 3
+    task_spec3 = {
+        "language": "Python",
+        "concepts": {
+            "Easy": {"Variable Assignment": True, "Basic Arithmetic": False},
+            "Medium": {"Functions": False},
+            "Hard": {"Recursion": True},
+        },
+        "num_problems": 1,
+    }
+
+    # for batch 4
     task_spec = {
         "language": "Python",
         "concepts": {
@@ -106,11 +145,11 @@ if __name__ == "__main__":
             "Medium": {"Functions": True},
             "Hard": {"Recursion": False},
         },
-        "num_problems": 2,
+        "num_problems": 3,
     }
 
     # Generate problems
-    deltas = generate_problems(task_spec)
+    deltas = generate_problems(task_spec3)
 
     # Print the streaming output
     for delta in deltas:
