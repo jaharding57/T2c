@@ -35,54 +35,57 @@ def generate_problems(task_specification):
     Returns:
         dict: A JSON object containing the generated problems.
     """
-    system_prompt = """You are a Parsons problem generator.
+    system_prompt = """system_prompt = You are a multimodal Parsons problem generator.
 
-Your task is to generate a set of programming problems in the selected language, relevant to the selected concepts and difficulties. Each problem should include:
-- a clear problem description,
-- a set of solution blocks (in correct order),
-- a set of distractor blocks (plausible but incorrect or out-of-place code),
-- and optional metadata such as difficulty and concepts.
+Your task is to generate a set of block-based ordering problems in a selected mode. A "mode" represents a topical or syntactic domain (e.g., Python code, gibberish lines, Smurf facts, etc.). Each problem should consist of:
+- a problem description,
+- a sequence of correct blocks in order (solution_blocks),
+- and a set of distractor blocks that seem plausible but are incorrect, unordered, or irrelevant.
 
-The output must be a JSON object with this structure:
+The output should be a JSON object structured as follows:
 
 {
-  "language": "Python",
+  "mode": "JavaScript", // or "Python", "C#", "Gibberish", or "Smurfs"
   "num_problems": 3,
   "problems": [
     {
-      "_thoughts": [
-        "This problem focuses on using a for-loop to iterate and update a variable.",
-        "I will include a distractor with the wrong range and another with an unrelated variable."
-      ],
-      "problem": "Arrange the code so that x == 3 when the program terminates.",
-      "solution_blocks": [
-        { "id": "block-a1", "code": "x = 27" },
-        { "id": "block-b1", "code": "for i in range(2):" },
-        { "id": "block-c1", "code": "x /= 3" }
-      ],
-      "distractor_blocks": [
-        { "id": "block-d1", "code": "y = 57" },
-        { "id": "block-e1", "code": "x *= y" },
-        { "id": "block-f1", "code": "for i in range(3):" }
-      ],
-      "difficulty": "Medium",
-      "concepts": ["Loops", "Variable Assignment"],
-      "language": "Python"
+      "_thoughts": [...],  // optional design thoughts for debugging
+      "problem": "...",
+      "solution_blocks": [ { "id": "...", "code": "..." }, ... ],
+      "distractor_blocks": [ { "id": "...", "code": "..." }, ... ],
+      "difficulty": "Medium",  // optional
+      "concepts": ["..."],     // optional
+      "mode": "JavaScript"     // repeated per-problem
     },
     ...
   ]
 }
 
-**Each `solution_blocks` and `distractor_blocks` list must contain objects, each with:**
-- `"id"`: a unique identifier string like `"block-a1"`, `"block-b1"`, etc.
-- `"code"`: a single line of code.
+Supported modes:
 
-The problems should be relevant only to the selected concepts and reflect the indicated difficulty levels. Do not include concepts that were marked false.
+1. **Python**, **JavaScript**, and **C#**:
+   - Generate concise, valid code snippets (functions, conditionals, loops, variable assignments).
+   - Distractors should be syntactically valid but semantically incorrect, misleading, or incomplete.
+   - Maintain typical formatting and idioms for each language.
 
-The `"num_problems"` field in the output must match the `num_problems` value from the input task specification.
-IMPORTANT: DO NOT INCLUDE DUPLICATE CODE SNIPPETS ACROSS SOLUTIONS AND DISTRACTORS...
+2. **Gibberish**:
+   - Generate lines that resemble nonsense or whimsical code (e.g., `glorp = bleep(9);`)
+   - The correct order should follow a fake logical structure.
+   - Distractors can look syntactically valid but disrupt or confuse the intended nonsense sequence.
 
-Return a well-formed JSON object exactly as described above. Do not include any explanation, extra commentary, or surrounding prose — just the JSON.
+3. **Smurfs**:
+   - Generate factual-sounding statements about Smurfs.
+   - `solution_blocks` should represent **true** Smurf-related events or facts in **chronological order**.
+   - Distractors should include:
+     - real facts in the wrong order,
+     - incorrect or distorted facts,
+     - or unrelated trivia.
+
+**Important:** Do not include identical lines in both solution_blocks and distractor_blocks.
+
+**Your output must contain exactly as many problems as specified in the input task specification.**
+
+Return only the JSON structure. Do not include any commentary or explanation outside of the JSON object.
 """
 
 
@@ -104,53 +107,83 @@ Return a well-formed JSON object exactly as described above. Do not include any 
 
 if __name__ == "__main__":
 
-    # for batch 1
+    # For C# batch
     task_spec1 = {
-        "language": "C+",
+        "mode": "C#",
         "concepts": {
             "Easy": {"Variable Assignment": True, "Basic Arithmetic": True},
             "Medium": {"Functions": True},
-            "Hard": {"Recursion": False},
+            "Hard": {"Recursion": False}
         },
-        "num_problems": 3,
+        "num_problems": 3
     }
 
-    # for batch 2
+    # For JavaScript batch
     task_spec2 = {
-        "language": "Javascript",
+        "mode": "JavaScript",
         "concepts": {
             "Easy": {"Variable Assignment": True, "Basic Arithmetic": True},
             "Medium": {"Functions": True},
-            "Hard": {"Recursion": False},
+            "Hard": {"Recursion": False}
         },
-        "num_problems": 1,
+        "num_problems": 1
     }
 
-    # for batch 3
+    # For Python + recursion batch
     task_spec3 = {
-        "language": "Python",
+        "mode": "Python",
         "concepts": {
             "Easy": {"Variable Assignment": True, "Basic Arithmetic": False},
             "Medium": {"Functions": False},
-            "Hard": {"Recursion": True},
+            "Hard": {"Recursion": True}
         },
-        "num_problems": 1,
+        "num_problems": 1
     }
 
-    # for batch 4
-    task_spec = {
-        "language": "Python",
-        "concepts": {
-            "Easy": {"Variable Assignment": True, "Basic Arithmetic": True},
-            "Medium": {"Functions": True},
-            "Hard": {"Recursion": False},
-        },
-        "num_problems": 3,
+    # For Smurfs batch
+    task_spec_smurfs = {
+        "mode": "Smurfs",
+        "num_problems": 2
     }
 
-    # Generate problems
-    deltas = generate_problems(task_spec3)
+    # For Gibberish batch
+    task_spec_gibberish = {
+        "mode": "Gibberish",
+        "num_problems": 2
+    }
 
-    # Print the streaming output
+    # Choose which batch to generate
+    # deltas = generate_problems(task_spec_smurfs)
+    deltas = generate_problems(task_spec_gibberish)
+
+
+    # Collect and pretty-print the output
+    import sys
+
+    output_chunks = []
     for delta in deltas:
-        print(delta, end="")
+        if delta:
+            output_chunks.append(delta)
+
+    full_json_str = "".join(output_chunks)
+
+    # Parse it back into a dict
+    try:
+        parsed = json.loads(full_json_str)
+    except json.JSONDecodeError as e:
+        print("❌ JSON parsing failed:", e)
+        sys.exit(1)
+
+    # Pretty-print to terminal
+    print(json.dumps(parsed, indent=2))
+
+    # (Optional) Save to file    
+
+    # output file name(s)
+    # op_file_nm = "smurfs_batch1.json" 
+    op_file_nm = "gibberish_batch1.json"
+
+    with open(op_file_nm, "w") as f:
+        json.dump(parsed, f, indent=2)
+        print("✅ Saved to smurfs_batch1.json")
+
