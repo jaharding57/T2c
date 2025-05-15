@@ -1,13 +1,43 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Comic+Neue&family=Inter&family=JetBrains+Mono&display=swap" rel="stylesheet">
   <meta charset="UTF-8">
   <title>Parson's Problem Generator</title>
   <style>
+    /* Base */
     body {
-      font-family: Arial, sans-serif;
-      margin: 20px;
+        font-family: 'Inter', sans-serif;
+        background-color: white;
+        color: black;
+        transition: background-color 0.4s ease, color 0.4s ease;
     }
+
+    /* Code Mode */
+    body.code-mode {
+        font-family: 'JetBrains Mono', monospace;
+        background-color: #1e1e1e;
+        color: #eee;
+    }
+
+    /* Smurfs Mode */
+    body.smurfs-mode {
+        font-family: 'Comic Neue', cursive;
+        background-color: #d0ebff;
+        color: #003366;
+    }
+
+    #smurf-image {
+        display: none;
+        position: fixed;
+        bottom: 10px;
+        right: 10px;
+        width: 600px;
+        height: auto;
+        z-index: 99;
+    }
+
     .difficulty-group {
       margin-bottom: 20px;
     }
@@ -209,6 +239,25 @@
       const generatedUrlAnchor = document.getElementById('generated-url');
       generatedUrlAnchor.href = url;
       generatedUrlAnchor.textContent = url;
+
+      // Set font style based on mode
+    document.body.classList.remove('code-mode', 'smurfs-mode');
+    if (["Python", "JavaScript", "C#"].includes(mode)) {
+        document.body.classList.add('code-mode');
+    } else if (mode === "Smurfs") {
+        document.body.classList.add('smurfs-mode');
+    }
+    // 'Inter' remains default by omission
+
+    // Toggle Smurf image
+    const smurfImage = document.getElementById('smurf-image');
+    if (mode === "Smurfs") {
+        smurfImage.style.display = 'block';
+    } else {
+        smurfImage.style.display = 'none';
+    }
+
+
     }
 
     modeSelect.addEventListener('change', () => {
@@ -240,5 +289,7 @@
     renderConceptGroups(modeSelect.value);
     updateUI();
   </script>
+  <img id="smurf-image" src="https://static1.srcdn.com/wordpress/wp-content/uploads/2023/11/smurfs-2.jpg" alt="Smurf">
+
 </body>
 </html>
